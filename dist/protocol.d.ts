@@ -116,13 +116,14 @@ export declare class ArtTimeCode extends ArtNetPacket {
     opcode: number;
     protocolVersion: number;
     type: number;
+    framerate: number;
     stream: number;
     frames: number;
     seconds: number;
     minutes: number;
     hours: number;
-    constructor(type: number, stream: number, frames: number, seconds: number, minutes: number, hours: number);
-    getFrameRate(): 0 | 24 | 25 | 29.97 | 30;
+    tcString: string;
+    constructor(type: number, framerate: number, stream: number, frames: number, seconds: number, minutes: number, hours: number, tcString: string);
     static decode(data: Buffer): ArtTimeCode;
 }
 export declare class ArtSync extends ArtNetPacket {
