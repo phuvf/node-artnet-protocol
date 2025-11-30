@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.decode = exports.ArtSync = exports.ArtDmx = exports.ArtPollReply = exports.ArtPoll = exports.ArtNetPacket = exports.OutputPortStatus = exports.InputPortStatus = exports.PortInfo = void 0;
+exports.decode = exports.ArtSync = exports.ArtTimeCode = exports.ArtDmx = exports.ArtPollReply = exports.ArtPoll = exports.ArtNetPacket = exports.OutputPortStatus = exports.InputPortStatus = exports.PortInfo = void 0;
 const opcodes_1 = require("./opcodes");
 const header = Buffer.from([65, 114, 116, 45, 78, 101, 116, 0]);
 class PortInfo {
@@ -514,6 +514,47 @@ class ArtDmx extends ArtNetPacket {
     }
 }
 exports.ArtDmx = ArtDmx;
+class ArtTimeCode extends ArtNetPacket {
+    constructor(type, stream, frames, seconds, minutes, hours) {
+        super();
+        this.opcode = opcodes_1.OP_TIME_CODE;
+        this.protocolVersion = 14;
+        this.protocolVersion = 14;
+        this.type = type;
+        this.stream = stream;
+        this.frames = frames;
+        this.seconds = seconds;
+        this.minutes = minutes;
+        this.hours = hours;
+    }
+    getFrameRate() {
+        switch (this.type) {
+            case 0x00:
+                return 24;
+            case 0x01:
+                return 25;
+            case 0x02:
+                return 29.97;
+            case 0x03:
+                return 30;
+            default:
+                return 0;
+        }
+    }
+    static decode(data) {
+        const version = data.readUInt16BE(0);
+        const stream = data.readUInt8(3);
+        const frames = data.readUInt8(4);
+        const seconds = data.readUInt8(5);
+        const minutes = data.readUInt8(6);
+        const hours = data.readUInt8(7);
+        const type = data.readUInt8(8);
+        const result = new ArtTimeCode(type, stream, frames, seconds, minutes, hours);
+        result.protocolVersion = version;
+        return result;
+    }
+}
+exports.ArtTimeCode = ArtTimeCode;
 class ArtSync extends ArtNetPacket {
     constructor() {
         super(...arguments);
@@ -554,6 +595,8 @@ function decode(msg) {
             return ArtDmx.decode(packetData);
         case opcodes_1.OP_SYNC:
             return ArtSync.decode(packetData);
+        case opcodes_1.OP_TIME_CODE:
+            return ArtTimeCode.decode(packetData);
         default:
             console.log("Unknown packet type:", opCode);
             return null;

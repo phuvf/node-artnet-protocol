@@ -20,8 +20,8 @@ const PORT = 6454;
 class ArtNetController extends EventEmitter {
     constructor(isController = false) {
         super();
-        this.nameShort = 'NodeArtNetProto';
-        this.nameLong = 'https://github.com/jeffreykog/node-artnet-protocol';
+        this.nameShort = "NodeArtNetProto";
+        this.nameLong = "https://github.com/jeffreykog/node-artnet-protocol";
         this.isController = isController;
         const interfaces = os.networkInterfaces();
         const prefixes = {};
@@ -29,14 +29,14 @@ class ArtNetController extends EventEmitter {
             if (!addresses) {
                 return;
             }
-            addresses.forEach(addressInfo => {
+            addresses.forEach((addressInfo) => {
                 prefixes[addressInfo.cidr] = ip6addr.createCIDR(addressInfo.cidr);
             });
         });
         this.interfacePrefixes = prefixes;
     }
     bind(host) {
-        if (host === '0.0.0.0' || host === '::') {
+        if (host === "0.0.0.0" || host === "::") {
             host = undefined;
         }
         let prefixInfo = undefined;
@@ -54,31 +54,37 @@ class ArtNetController extends EventEmitter {
                 unicastAddress = host;
             }
             else {
-                throw Error('Bind host ' + host + ' does not match any network interface');
+                throw Error("Bind host " + host + " does not match any network interface");
             }
         }
         else {
-            broadcastAddress = '0.0.0.0';
+            broadcastAddress = "0.0.0.0";
         }
         if (broadcastAddress !== null) {
             console.log("Binding broadcast address " + broadcastAddress + ":6454");
             this.broadcastAddress = broadcastAddress;
-            const socketBroadcast = dgram.createSocket({ type: 'udp4', reuseAddr: true });
-            socketBroadcast.on('error', this.onSocketError);
-            socketBroadcast.on('message', (message, rinfo) => {
-                this.onSocketMessage('broadcast', message, rinfo);
+            const socketBroadcast = dgram.createSocket({
+                type: "udp4",
+                reuseAddr: true,
             });
-            socketBroadcast.on('listening', this.onSocketBroadcastListening.bind(this));
+            socketBroadcast.on("error", this.onSocketError);
+            socketBroadcast.on("message", (message, rinfo) => {
+                this.onSocketMessage("broadcast", message, rinfo);
+            });
+            socketBroadcast.on("listening", this.onSocketBroadcastListening.bind(this));
             socketBroadcast.bind(PORT, broadcastAddress);
             this.socketBroadcast = socketBroadcast;
         }
         if (unicastAddress !== null) {
             console.log("Binding unicast address " + unicastAddress + ":6454");
             this.unicastAddress = unicastAddress;
-            const socketUnicast = dgram.createSocket({ type: 'udp4', reuseAddr: true });
-            socketUnicast.on('error', this.onSocketError);
-            socketUnicast.on('message', (message, rinfo) => {
-                this.onSocketMessage('unicast', message, rinfo);
+            const socketUnicast = dgram.createSocket({
+                type: "udp4",
+                reuseAddr: true,
+            });
+            socketUnicast.on("error", this.onSocketError);
+            socketUnicast.on("message", (message, rinfo) => {
+                this.onSocketMessage("unicast", message, rinfo);
             });
             socketUnicast.bind(PORT, unicastAddress);
             this.socketUnicast = socketUnicast;
@@ -111,8 +117,7 @@ class ArtNetController extends EventEmitter {
             ]);
         });
     }
-    onSocketError(err) {
-    }
+    onSocketError(err) { }
     onSocketBroadcastListening() {
         if (this.socketBroadcast == null) {
             return;
@@ -133,6 +138,9 @@ class ArtNetController extends EventEmitter {
         }
         if (packet instanceof protocol_1.ArtDmx) {
             this.emit("dmx", packet);
+        }
+        else if (packet instanceof protocol_1.ArtTimeCode) {
+            this.emit("timecode", packet);
         }
         else if (packet instanceof protocol_1.ArtPoll) {
             this.sendArtPollReply();

@@ -4,6 +4,7 @@ import {
     OP_OUTPUT,
     OP_POLL,
     OP_POLL_REPLY, OP_SYNC,
+    OP_TIME_CODE,
     PAPA_UNUSED,
     PROTOCOL_DMX512, STYLE_NODE
 } from './opcodes';
@@ -607,6 +608,65 @@ export class ArtDmx extends ArtNetPacket {
         return Buffer.concat([header, buffer]);
     }
 }
+export class ArtTimeCode extends ArtNetPacket {
+    opcode = OP_TIME_CODE;
+    protocolVersion = 14;
+    type: number;
+    stream: number;
+    frames: number;
+    seconds: number;
+    minutes: number;
+    hours: number;
+    constructor(type: number, stream: number, frames: number, seconds: number, minutes: number, hours: number) {
+        super();
+        this.protocolVersion = 14;
+        this.type = type;
+        this.stream = stream;
+        this.frames = frames;
+        this.seconds = seconds;
+        this.minutes = minutes;
+        this.hours = hours;
+    }
+    getFrameRate() {
+        switch (this.type) {
+            case 0x00:
+                return 24;
+            case 0x01:
+                return 25;
+            case 0x02:
+                return 29.97;
+            case 0x03:
+                return 30;
+            default:
+                return 0;
+        }
+    }
+    static decode(data: Buffer) {
+        const version = data.readUInt16BE(0);
+        const stream = data.readUInt8(3);
+        const frames = data.readUInt8(4);
+        const seconds = data.readUInt8(5);
+        const minutes = data.readUInt8(6);
+        const hours = data.readUInt8(7);
+        const type = data.readUInt8(8);
+        const result = new ArtTimeCode(type, stream, frames, seconds, minutes, hours);
+        result.protocolVersion = version;
+        return result;
+    }
+    // encode() {
+    //     const header = super.encode();
+    //     const buffer = Buffer.alloc(8 + this.data.length);
+    //     buffer.writeUInt16BE(this.protocolVersion, 0);
+    //     buffer.writeUInt8(this.sequence, 2);
+    //     buffer.writeUInt8(this.physical, 3);
+    //     buffer.writeUInt16LE(this.universe, 4);
+    //     buffer.writeUInt16BE(this.data.length, 6);
+    //     for (let i = 0; i < this.data.length; i++) {
+    //         buffer.writeUInt8(this.data[i], 8 + i);
+    //     }
+    //     return Buffer.concat([header, buffer]);
+    // }
+}
 
 export class ArtSync extends ArtNetPacket {
 
@@ -652,6 +712,9 @@ export function decode(msg: Buffer): ArtNetPacket | null {
 
         case OP_SYNC:
             return ArtSync.decode(packetData);
+
+        case OP_TIME_CODE:
+            return ArtTimeCode.decode(packetData);
 
         default:
             console.log("Unknown packet type:", opCode);

@@ -112,6 +112,19 @@ export declare class ArtDmx extends ArtNetPacket {
     static decode(data: Buffer): ArtDmx;
     encode(): Buffer;
 }
+export declare class ArtTimeCode extends ArtNetPacket {
+    opcode: number;
+    protocolVersion: number;
+    type: number;
+    stream: number;
+    frames: number;
+    seconds: number;
+    minutes: number;
+    hours: number;
+    constructor(type: number, stream: number, frames: number, seconds: number, minutes: number, hours: number);
+    getFrameRate(): 0 | 24 | 25 | 29.97 | 30;
+    static decode(data: Buffer): ArtTimeCode;
+}
 export declare class ArtSync extends ArtNetPacket {
     opcode: number;
     protocolVersion: number;

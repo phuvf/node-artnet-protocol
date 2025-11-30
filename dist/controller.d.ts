@@ -1,6 +1,6 @@
 /// <reference types="node" />
-import { ArtNetPacket } from './protocol';
-import EventEmitter = require('events');
+import { ArtNetPacket } from "./protocol";
+import EventEmitter = require("events");
 export declare class ArtNetController extends EventEmitter {
     private readonly interfacePrefixes;
     private readonly isController;

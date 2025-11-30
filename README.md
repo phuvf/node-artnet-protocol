@@ -32,10 +32,15 @@ controller.bind('0.0.0.0');
 // Send DMX data (Sequence 0, Physical input port 0, Universe 0.
 controller.sendBroadcastPacket(new ArtDmx(0, 0, 0, [255, 0, 0]));
 
-// Or if you want to receive DMX data
+// Receive DMX data
 controller.on('dmx', (dmx) => {
     // dmx contains an ArtDmx object
     console.log(dmx.universe, dmx.data);
+});
+
+// Receive timecode data
+controller.on('timecode', (timecode) => {
+    console.log(`Timecode @ ${timecode.getFrameRate()} fps: ${timecode.hours.toString().padStart(2, '0')}:${timecode.minutes.toString().padStart(2, '0')}:${timecode.seconds.toString().padStart(2, '0')}:${timecode.frames.toString().padStart(2, '0')}`);
 });
 ```
 
