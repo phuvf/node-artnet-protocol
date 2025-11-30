@@ -10,7 +10,6 @@ import {
 } from './opcodes';
 
 const header = Buffer.from([65, 114, 116, 45, 78, 101, 116, 0]);
-const framerates = [24, 25, 29.97, 30];
 
 // https://artisticlicence.com/WebSiteMaster/User%20Guides/art-net.pdf
 
@@ -612,28 +611,59 @@ export class ArtDmx extends ArtNetPacket {
 export class ArtTimeCode extends ArtNetPacket {
     opcode = OP_TIME_CODE;
     protocolVersion = 14;
-    type: number;
     framerate: number;
-    stream: number;
+    stream: number = 0;
     frames: number;
     seconds: number;
     minutes: number;
     hours: number;
-    tcString: string;
 
-    constructor(type: number, framerate: number, stream: number, frames: number, seconds: number, minutes: number, hours: number, tcString: string) {
+    constructor(hours: number,minutes: number,seconds: number,frames: number,framerate: number, stream: number = 0) {
         super();
         this.protocolVersion = 14;
-        this.type = type;
         this.framerate = framerate;
         this.stream = stream;
         this.frames = frames;
         this.seconds = seconds;
         this.minutes = minutes;
         this.hours = hours;
-        this.tcString = tcString;
     }
     
+    getTimeCodeString(): string {
+        const tcFinalSeparator = this.framerate === 29.97 ? ';' : ':';
+        return `${this.hours.toString().padStart(2, '0')}:${this.minutes.toString().padStart(2, '0')}:${this.seconds.toString().padStart(2, '0')}${tcFinalSeparator}${this.frames.toString().padStart(2, '0')}`;
+    }
+
+    static getType(framerate: number): number {
+        //get type from framerate
+        switch (framerate) {
+            case 24:
+            return 0;
+            case 25:
+            return 1;
+            case 29.97:
+            return 2;
+            case 30:
+            return 3;
+            default:
+            return 0;
+        }
+    }
+    static getFramerate(type: number): number {
+        switch (type) {
+            case 0:
+            return 24;
+            case 1:
+            return 25;
+            case 2:
+            return 29.97;
+            case 3:
+            return 30;
+            default:
+            return 24;
+        }
+    }
+
     static decode(data: Buffer) {
         const version = data.readUInt16BE(0);
         const stream = data.readUInt8(3);
@@ -642,26 +672,24 @@ export class ArtTimeCode extends ArtNetPacket {
         const minutes = data.readUInt8(6);
         const hours = data.readUInt8(7);
         const type = data.readUInt8(8);
-        const framerate = framerates[type];
-        const tcSeparator = framerate === 29.97 ? ';' : ':';
-        const tcString = `${hours.toString().padStart(2, '0')}${tcSeparator}${minutes.toString().padStart(2, '0')}${tcSeparator}${seconds.toString().padStart(2, '0')}${tcSeparator}${frames.toString().padStart(2, '0')}`;
-        const result = new ArtTimeCode(type, framerate, stream, frames, seconds, minutes, hours, tcString);
+        const framerate = this.getFramerate(type);
+        const result = new ArtTimeCode(hours, minutes, seconds, frames, framerate, stream);
         result.protocolVersion = version;
         return result;
     }
-    // encode() {
-    //     const header = super.encode();
-    //     const buffer = Buffer.alloc(8 + this.data.length);
-    //     buffer.writeUInt16BE(this.protocolVersion, 0);
-    //     buffer.writeUInt8(this.sequence, 2);
-    //     buffer.writeUInt8(this.physical, 3);
-    //     buffer.writeUInt16LE(this.universe, 4);
-    //     buffer.writeUInt16BE(this.data.length, 6);
-    //     for (let i = 0; i < this.data.length; i++) {
-    //         buffer.writeUInt8(this.data[i], 8 + i);
-    //     }
-    //     return Buffer.concat([header, buffer]);
-    // }
+    encode() {
+        const header = super.encode();
+        const buffer = Buffer.alloc(9);
+        buffer.writeUInt16BE(this.protocolVersion, 0);
+        buffer.writeUInt8(0, 2); //filler
+        buffer.writeUInt8(this.stream, 3);
+        buffer.writeUInt8(this.frames, 4);
+        buffer.writeUInt8(this.seconds, 5);
+        buffer.writeUInt8(this.minutes, 6);
+        buffer.writeUInt8(this.hours, 7);
+        buffer.writeUInt8(ArtTimeCode.getType(this.framerate), 8);
+        return Buffer.concat([header, buffer]);
+        }
 }
 
 export class ArtSync extends ArtNetPacket {
