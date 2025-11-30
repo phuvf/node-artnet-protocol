@@ -10,6 +10,7 @@ import {
 } from './opcodes';
 
 const header = Buffer.from([65, 114, 116, 45, 78, 101, 116, 0]);
+const framerates = [24, 25, 29.97, 30];
 
 // https://artisticlicence.com/WebSiteMaster/User%20Guides/art-net.pdf
 
@@ -612,35 +613,27 @@ export class ArtTimeCode extends ArtNetPacket {
     opcode = OP_TIME_CODE;
     protocolVersion = 14;
     type: number;
+    framerate: number;
     stream: number;
     frames: number;
     seconds: number;
     minutes: number;
     hours: number;
-    constructor(type: number, stream: number, frames: number, seconds: number, minutes: number, hours: number) {
+    tcString: string;
+
+    constructor(type: number, framerate: number, stream: number, frames: number, seconds: number, minutes: number, hours: number, tcString: string) {
         super();
         this.protocolVersion = 14;
         this.type = type;
+        this.framerate = framerate;
         this.stream = stream;
         this.frames = frames;
         this.seconds = seconds;
         this.minutes = minutes;
         this.hours = hours;
+        this.tcString = tcString;
     }
-    getFrameRate() {
-        switch (this.type) {
-            case 0x00:
-                return 24;
-            case 0x01:
-                return 25;
-            case 0x02:
-                return 29.97;
-            case 0x03:
-                return 30;
-            default:
-                return 0;
-        }
-    }
+    
     static decode(data: Buffer) {
         const version = data.readUInt16BE(0);
         const stream = data.readUInt8(3);
@@ -649,7 +642,10 @@ export class ArtTimeCode extends ArtNetPacket {
         const minutes = data.readUInt8(6);
         const hours = data.readUInt8(7);
         const type = data.readUInt8(8);
-        const result = new ArtTimeCode(type, stream, frames, seconds, minutes, hours);
+        const framerate = framerates[type];
+        const tcSeparator = framerate === 29.97 ? ';' : ':';
+        const tcString = `${hours.toString().padStart(2, '0')}${tcSeparator}${minutes.toString().padStart(2, '0')}${tcSeparator}${seconds.toString().padStart(2, '0')}${tcSeparator}${frames.toString().padStart(2, '0')}`;
+        const result = new ArtTimeCode(type, framerate, stream, frames, seconds, minutes, hours, tcString);
         result.protocolVersion = version;
         return result;
     }
