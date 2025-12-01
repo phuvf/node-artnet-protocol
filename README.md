@@ -13,6 +13,7 @@ or full ArtNet/DMX controllers.
 * Automatic discovery using `ArtPoll` / `ArtPollReply`
 * Low-level packet encoder/decoder which can be used as a binary protocol library without all other functionality.
 * Sending/receiving of DMX data (`ArtDmx`)
+* Sending/receiving of ArtNet TimeCode data (`ArtTimeCode`)
 
 ## Usage
 Install Node ArtNet Protocol using NPM:
@@ -22,8 +23,8 @@ $ npm install --save artnet-protocol
 
 Code usage:
 ```javascript
-import { ArtNetController } from 'artnet-protocol/dist';
-import { ArtDmx } from 'artnet-protocol/dist/protocol';
+import { ArtNetController } from './dist/index.js';
+import { ArtDmx } from './dist/protocol.js';
 
 const controller = new ArtNetController();
 controller.bind('0.0.0.0');
@@ -40,7 +41,7 @@ controller.on('dmx', (dmx) => {
 
 // Receive timecode data
 controller.on('timecode', (timecode) => {
-    console.log(`Timecode @ ${timecode.getFrameRate()} fps: ${timecode.hours.toString().padStart(2, '0')}:${timecode.minutes.toString().padStart(2, '0')}:${timecode.seconds.toString().padStart(2, '0')}:${timecode.frames.toString().padStart(2, '0')}`);
+    console.log(`ArtNet TimeCode received (running @ ${timecode.framerate} fps): ${timecode.getTimeCodeString()}`);
 });
 ```
 
