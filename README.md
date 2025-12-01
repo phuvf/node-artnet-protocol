@@ -23,8 +23,8 @@ $ npm install --save artnet-protocol
 
 Code usage:
 ```javascript
-import { ArtNetController } from './dist/index.js';
-import { ArtDmx } from './dist/protocol.js';
+import { ArtNetController } from 'artnet-protocol/dist';
+import { ArtDmx } from 'artnet-protocol/dist/protocol';
 
 const controller = new ArtNetController();
 controller.bind('0.0.0.0');
